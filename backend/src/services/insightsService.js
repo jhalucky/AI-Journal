@@ -26,8 +26,7 @@ const buildInsights = async (userId) => {
     totalEntries: journals.length,
     topEmotion: topKey(countBy(journals, (journal) => journal.emotion)),
     mostUsedAmbience: topKey(countBy(journals, (journal) => journal.ambience)),
-    recentKeywords,
-    hasEntries: journals.length > 0
+    recentKeywords
   };
 };
 

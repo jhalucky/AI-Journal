@@ -10,8 +10,8 @@ const assertRequired = (value, fieldName) => {
   }
 };
 
-const assertAuthorizedUser = (request) => {
-  if (request.params.userId && String(request.params.userId) !== String(request.user.id)) {
+const assertAuthorizedUserId = (candidateUserId, request) => {
+  if (String(candidateUserId) !== String(request.user.id)) {
     const error = new Error('Forbidden: you can only access your own journals');
     error.status = 403;
     throw error;
@@ -20,14 +20,16 @@ const assertAuthorizedUser = (request) => {
 
 const postJournal = async (request, response, next) => {
   try {
-    const { ambience, text } = request.body;
+    const { userId, ambience, text } = request.body;
 
+    assertRequired(userId, 'userId');
     assertRequired(ambience, 'ambience');
     assertRequired(text, 'text');
+    assertAuthorizedUserId(String(userId).trim(), request);
 
     const analysis = await analyzeJournalText(String(text).trim());
     const journal = await createJournal({
-      userId: String(request.user.id),
+      userId: String(userId).trim(),
       ambience: String(ambience).trim(),
       text: String(text).trim(),
       emotion: analysis.emotion,
@@ -35,11 +37,7 @@ const postJournal = async (request, response, next) => {
       summary: analysis.summary
     });
 
-    response.status(201).json({
-      ...journal,
-      provider: analysis.provider,
-      cached: analysis.cached
-    });
+    response.status(201).json(journal);
   } catch (error) {
     next(error);
   }
@@ -47,8 +45,8 @@ const postJournal = async (request, response, next) => {
 
 const listJournals = async (request, response, next) => {
   try {
-    assertAuthorizedUser(request);
-    const journals = await getJournalsByUserId(String(request.user.id));
+    assertAuthorizedUserId(request.params.userId, request);
+    const journals = await getJournalsByUserId(String(request.params.userId));
     response.json(journals);
   } catch (error) {
     next(error);
@@ -61,7 +59,11 @@ const analyzeJournal = async (request, response, next) => {
     assertRequired(text, 'text');
 
     const analysis = await analyzeJournalText(String(text).trim());
-    response.json(analysis);
+    response.json({
+      emotion: analysis.emotion,
+      keywords: analysis.keywords,
+      summary: analysis.summary
+    });
   } catch (error) {
     next(error);
   }
@@ -69,8 +71,8 @@ const analyzeJournal = async (request, response, next) => {
 
 const getInsights = async (request, response, next) => {
   try {
-    assertAuthorizedUser(request);
-    const insights = await buildInsights(String(request.user.id));
+    assertAuthorizedUserId(request.params.userId, request);
+    const insights = await buildInsights(String(request.params.userId));
     response.json(insights);
   } catch (error) {
     next(error);

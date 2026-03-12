@@ -1,5 +1,5 @@
 function Insights({ analysis, insights }) {
-  const hasStoredEntries = Boolean(insights?.hasEntries);
+  const hasStoredEntries = Boolean(insights && insights.totalEntries > 0);
 
   return (
     <div className="stack-lg">
@@ -15,7 +15,6 @@ function Insights({ analysis, insights }) {
           <div className="stack">
             <div className="tag-row">
               <span className="tag">Emotion: {analysis.emotion}</span>
-              <span className="tag">Provider: {analysis.provider ?? 'unknown'}</span>
               {(analysis.keywords ?? []).map((keyword) => (
                 <span key={keyword} className="tag muted">{keyword}</span>
               ))}

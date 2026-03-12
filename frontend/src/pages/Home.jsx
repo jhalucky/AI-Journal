@@ -75,17 +75,18 @@ function Home() {
     try {
       const created = await request('/journal', {
         method: 'POST',
-        body: JSON.stringify(form)
+        body: JSON.stringify({
+          userId: String(currentUser.id),
+          ...form
+        })
       });
 
       setAnalysis({
         emotion: created.emotion,
         keywords: created.keywords,
-        summary: created.summary,
-        provider: created.provider,
-        cached: false
+        summary: created.summary
       });
-      setMessage(`Journal entry saved to SQLite and analyzed by ${created.provider ?? 'the configured provider'}. Insights have been updated.`);
+      setMessage('Journal entry saved and insights have been updated.');
       await Promise.all([loadEntries(currentUser.id), loadInsights(currentUser.id)]);
     } catch (requestError) {
       setError(requestError.message);
@@ -105,9 +106,7 @@ function Home() {
       });
 
       setAnalysis(data);
-      setMessage(data.cached
-        ? `Analysis served from cache (${data.provider}). Submit Entry if you want this reflected in insights.`
-        : `Analysis complete with ${data.provider}. Submit Entry if you want this reflected in insights.`);
+      setMessage('Analysis complete. Submit Entry if you want this reflected in insights.');
     } catch (requestError) {
       setError(requestError.message);
     } finally {
